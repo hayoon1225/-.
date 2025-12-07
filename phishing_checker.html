@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>보이스피싱 위험도 분석 도구</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "맑은 고딕", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #f5f5f7;
+      display: flex;
+      justify-content: center;
+    }
+    .page {
+      max-width: 720px;
+      width: 100%;
+      min-height: 100vh;
+      background-color: #ffffff;
+      box-shadow: 0 0 10px rgba(0,0,0,0.12);
+      padding: 20px 18px 28px;
+    }
+    h1 {
+      font-size: 24px;
+      margin: 0 0 6px;
+      color: #222;
+      text-align: center;
+    }
+    .subtitle {
+      font-size: 14px;
+      color: #666;
+      text-align: center;
+      margin-bottom: 18px;
+    }
+    label {
+      font-size: 15px;
+      font-weight: bold;
+      display: block;
+      margin-bottom: 6px;
+    }
+    textarea {
+      width: 100%;
+      min-height: 150px;
+      padding: 12px;
+      font-size: 15px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      resize: vertical;
+    }
+    textarea:focus {
+      outline: none;
+      border-color: #2c7cff;
+      box-shadow: 0 0 0 2px rgba(44,124,255,0.15);
+    }
+    .hint {
+      font-size: 13px;
+      color: #888;
+      margin-top: 4px;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+    .btn-area {
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    button {
+      cursor: pointer;
+      border: none;
+    }
+    .btn-main {
+      flex: 1;
+      min-width: 140px;
+      font-size: 16px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background-color: #2c7cff;
+      color: #fff;
+      font-weight: 600;
+    }
+    .btn-sub {
+      min-width: 120px;
+      font-size: 14px;
+      padding: 9px 10px;
+      border-radius: 10px;
+      background-color: #e0e0e0;
+      color: #222;
+    }
+    .result-section {
+      margin-top: 18px;
+      padding: 14px 12px;
+      border-radius: 12px;
+      background-color: #f3f6ff;
+      border: 1px solid #d4dfff;
+    }
+    .badge {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+    .level-safe { background-color: #e3f6e8; color: #1b7a33; }
+    .level-caution { background-color: #fff4d6; color: #b37700; }
+    .level-danger { background-color: #ffe0e0; color: #b40000; }
+    .level-high { background-color: #ffcccc; color: #7a0000; }
+    .result-title {
+      font-size: 17px;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+    .result-score {
+      font-size: 14px;
+      color: #555;
+      margin-bottom: 8px;
+    }
+    .result-text {
+      font-size: 15px;
+      line-height: 1.6;
+      margin-bottom: 10px;
+    }
+    .list {
+      font-size: 14px;
+      margin-bottom: 6px;
+      padding-left: 18px;
+    }
+    .list li {
+      margin-bottom: 3px;
+    }
+    .section-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-top: 10px;
+      margin-bottom: 4px;
+    }
+    .contact-box {
+      margin-top: 10px;
+      padding: 10px 10px;
+      border-radius: 10px;
+      background-color: #ffffff;
+      border: 1px dashed #b3c4ff;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .contact-box strong {
+      font-weight: 700;
+    }
+    .small {
+      font-size: 12px;
+      color: #777;
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+    @media (max-width: 480px) {
+      .page { padding: 18px 12px 24px; }
+      h1 { font-size: 21px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>보이스피싱 위험도 분석 도구</h1>
+    <div class="subtitle">받은 문자 내용을 아래에 붙여 넣고 위험도를 확인해 보세요. 실제 계좌정보는 입력하지 않는 것이 좋습니다.</div>
+
+    <label for="smsText">문자 내용 입력</label>
+    <textarea id="smsText" placeholder="[예시] 검찰청입니다. 귀하의 주민등록번호가 도용되어 계좌가 압류되었습니다. 아래 링크로 접속하여 본인인증을 완료해 주세요."></textarea>
+    <div class="hint">실제 문자 전체를 복사해서 붙여 넣으면 더 정확하게 분석할 수 있습니다. 의심되는 링크가 있는 경우 그대로 붙여 넣어도 됩니다.</div>
+
+    <div class="btn-area">
+      <button class="btn-main" onclick="analyze()">위험도 분석하기</button>
+      <button class="btn-sub" onclick="clearText()">지우기</button>
+      <button class="btn-sub" onclick="fillExample()">예시 문자 넣기</button>
+    </div>
+
+    <div id="result" class="result-section" style="display:none;"></div>
+
+    <div class="small">
+      이 도구는 간단한 규칙으로 위험도를 추정하는 참고용 도구이며, 실제 수사 기관의 판단을 대신할 수 없습니다. 조금이라도 이상하거나 불안하다면 링크를 누르지 말고 바로 신고하는 것이 가장 안전합니다.
+    </div>
+  </div>
+
+  <script>
+    function clearText() {
+      document.getElementById('smsText').value = '';
+      document.getElementById('result').style.display = 'none';
+      document.getElementById('result').innerHTML = '';
+    }
+
+    function fillExample() {
+      const example = "[국세청] 미납 세금이 확인되었습니다. 1시간 이내 미납금 입금이 없을 시 법적 조치가 진행됩니다. 아래 링크 접속 후 본인 계좌와 비밀번호를 입력해 주세요. http://example.badlink.me";
+      document.getElementById('smsText').value = example;
+      document.getElementById('result').style.display = 'none';
+      document.getElementById('result').innerHTML = '';
+    }
+
+    function analyze() {
+      const text = document.getElementById('smsText').value.trim();
+      const resultBox = document.getElementById('result');
+
+      if (!text) {
+        alert('먼저 문자를 입력해 주세요.');
+        return;
+      }
+
+      const lower = text.toLowerCase();
+
+      // 특징 키워드 목록
+      const patterns = {
+        personal: [
+          "주민등록번호","주민번호","계좌번호","계좌","비밀번호","비번","공인인증",
+          "보안카드","otp","카드번호","인증번호","본인인증","로그인 정보"
+        ],
+        urgent: [
+          "즉시","지금 바로","1시간 이내","10분 이내","긴급","미납","압류",
+          "정지","차단","해지","형사처벌","법적 조치","검찰","경찰","수사",
+          "고소","고발","출석요구"
+        ],
+        link: [
+          "http://","https://",".link",".top",".xyz","bit.ly","me2.kr","tinyurl","앱 설치"
+        ],
+        money: [
+          "입금","송금","출금","환불","대출","연체","한도","결제 승인","결제취소","포인트 전환"
+        ],
+        threat: [
+          "당신의 계정이 도용","정보가 유출","계좌가 도용","보안 사고","피해 보상",
+          "범죄에 연루","명의가 도용","강제 해지"
+        ]
+      };
+
+      let score = 0;
+      const hits = {
+        personal: [],
+        urgent: [],
+        link: [],
+        money: [],
+        threat: []
+      };
+
+      // 간단한 매칭 함수
+      function checkCategory(category, weight) {
+        patterns[category].forEach(keyword => {
+          if (text.indexOf(keyword) !== -1 || lower.indexOf(keyword.toLowerCase()) !== -1) {
+            score += weight;
+            hits[category].push(keyword);
+          }
+        });
+      }
+
+      checkCategory('personal', 3);
+      checkCategory('urgent', 2);
+      checkCategory('link', 3);
+      checkCategory('money', 2);
+      checkCategory('threat', 2);
+
+      // 수신인이 모르는 발신자인지 간단 추정
+      if (text.indexOf("본인이 아니면") !== -1 ||
+          text.indexOf("거래가 아닙니다") !== -1) {
+        score += 1;
+        hits.threat.push("본인이 아닐 경우 안내");
+      }
+
+      // 위험도 판정
+      let level = "";
+      let labelClass = "";
+      let message = "";
+
+      if (score <= 2) {
+        level = "안전 또는 낮은 위험";
+        labelClass = "level-safe";
+        message = "보이스피싱 특징이 뚜렷하게 나타나지 않습니다. 그래도 모르는 번호의 링크는 누르지 않는 것이 좋습니다.";
+      } else if (score <= 5) {
+        level = "주의 필요";
+        labelClass = "level-caution";
+        message = "일부 보이스피싱에서 자주 사용되는 표현이 포함되어 있습니다. 발신 번호가 맞는지 직접 확인하고, 링크 접속과 개인정보 입력은 피하는 것이 좋습니다.";
+      } else if (score <= 8) {
+        level = "위험 가능성 높음";
+        labelClass = "level-danger";
+        message = "보이스피싱에서 자주 보이는 표현이 여러 개 포함되어 있습니다. 이 문자는 의심스럽기 때문에 링크를 절대 누르지 말고, 은행 또는 기관의 공식 전화번호로 직접 문의하는 것이 안전합니다.";
+      } else {
+        level = "매우 위험 – 보이스피싱 의심";
+        labelClass = "level-high";
+        message = "개인정보 요구, 긴급한 압박, 링크 접속 요구 등 보이스피싱의 전형적인 특징이 많이 포함되어 있습니다. 이 문자는 보이스피싱일 가능성이 매우 높으므로 절대 답장하거나 링크를 누르지 말고 즉시 신고하는 것이 좋습니다.";
+      }
+
+      // HTML 구성
+      let html = "";
+
+      html += `<span class="badge ${labelClass}">${level}</span>`;
+      html += `<div class="result-title">분석 결과</div>`;
+      html += `<div class="result-score">위험 점수: ${score}점 (점수가 높을수록 보이스피싱 가능성이 큽니다)</div>`;
+      html += `<div class="result-text">${message}</div>`;
+
+      html += `<div class="section-title">감지된 의심 요소</div>`;
+      html += "<ul class='list'>";
+
+      function liFor(name, arr) {
+        if (arr.length > 0) {
+          html += `<li>${name}: ${[...new Set(arr)].join(", ")}</li>`;
+        }
+      }
+
+      liFor("개인정보·계좌 요구", hits.personal);
+      liFor("긴급성·압박 표현", hits.urgent);
+      liFor("의심스러운 링크·앱 설치 유도", hits.link);
+      liFor("입금·송금 등 금전 요구", hits.money);
+      liFor("도용·수사·법적 조치 위협", hits.threat);
+
+      if (
+        hits.personal.length === 0 &&
+        hits.urgent.length === 0 &&
+        hits.link.length === 0 &&
+        hits.money.length === 0 &&
+        hits.threat.length === 0
+      ) {
+        html += "<li>특별한 의심 표현이 감지되지 않았습니다. 그래도 모르는 번호와 링크는 항상 조심하는 것이 좋습니다.</li>";
+      }
+
+      html += "</ul>";
+
+      html += `
+        <div class="section-title">의심 문자를 받았을 때 행동 요령</div>
+        <div class="list" style="list-style:none; padding-left:0;">
+          <li>1) 링크를 절대 누르지 말고, 문자에 적힌 번호로 바로 전화하지 않습니다.</li>
+          <li>2) 실제 거래 은행, 카드사, 공공기관의 공식 홈페이지나 고객센터 번호를 직접 검색해 확인합니다.</li>
+          <li>3) 가족이나 주변 사람에게 내용을 먼저 보여 주고 함께 판단합니다.</li>
+        </div>
+      `;
+
+      html += `
+        <div class="contact-box">
+          <strong>도움이 필요할 때 연락처</strong><br />
+          · 경찰서 112 (긴급 신고)<br />
+          · 경찰청 사이버범죄 신고: ecrm.police.go.kr<br />
+          · 금융감독원 상담: 국번 없이 1332<br />
+          의심 문자는 스스로 해결하려 하지 말고, 위의 공식 창구를 통해 상담을 받는 것이 가장 안전합니다.
+        </div>
+      `;
+
+      resultBox.innerHTML = html;
+      resultBox.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
